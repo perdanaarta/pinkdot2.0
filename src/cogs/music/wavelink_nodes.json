@@ -1,0 +1,9 @@
+[
+    {
+        "identifier": "[NON SSL] local",
+        "host":"localhost",
+        "port": 7400,
+        "password": "sushisecretpassword",
+        "https": false
+    }
+]

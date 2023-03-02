@@ -1,0 +1,10 @@
+services:
+  lavalink:
+    container_name: lavalink
+    image: fredboat/lavalink
+    ports:
+      - "7400:2333"
+    volumes:
+      - type: bind
+        source: ./application.yml
+        target: /opt/Lavalink/application.yml
