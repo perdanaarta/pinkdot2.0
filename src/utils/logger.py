@@ -17,7 +17,7 @@ class StreamFormatter(logging.Formatter):
 
     FORMATS = {
         level: logging.Formatter(
-            f'\x1b[30;1m%(asctime)s \x1b[0m{colour}%(levelname)s\x1b[0m \x1b[35m%(name)s\x1b[0m %(message)s',
+            f'\x1b[30;1m%(asctime)s \x1b[0m{colour}%(levelname)s\x1b[0m \x1b[35m%(name)s [\x1b[35m%(filename)s:%(lineno)d]\x1b[0m %(message)s',
             '[%Y-%m-%d %H:%M:%S]',
         )
         for level, colour in LEVEL_COLOURS

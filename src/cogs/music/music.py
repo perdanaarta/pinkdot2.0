@@ -7,7 +7,7 @@ import wavelink
 
 from .utils import Track, TrackList
 from .player import Player, PlayerManager, PlayerLoopState
-from .search import YouTubeSearch
+from .search import YouTubeSearch, SpotifySearch
 
 from utils.formatter import TextFormatter as fmt
 from utils.paginator import Paginator
@@ -17,6 +17,8 @@ class Music(Cog):
     def __init__(self, bot: Bot) -> None:
         self.bot = bot
         self.manager = PlayerManager(bot)
+
+        bot.loop.create_task(SpotifySearch.init())
 
     group = app_commands.Group(name="music", description="A simple yet powerful music player that can play from YouTube and Spotify")
 
@@ -110,7 +112,7 @@ class Music(Cog):
             await msg.edit(
                 content=None,
                 embed=discord.Embed(
-                    title="Song added.",
+                    title="Song added",
                     description=f"{fmt.hyperlink(track.title, track.url)}"
                 ).set_thumbnail(url=track.thumbnail),
                 view=None
@@ -132,21 +134,93 @@ class Music(Cog):
         if interaction.user.voice is None:
             await interaction.response.send_message("You are not connected to any voice channel.")
 
-        track = await self.choose_track(interaction, query)
+        await interaction.response.defer()
+
+
         player = await self.manager.create_player(
             guild=interaction.guild, 
             channel=interaction.user.voice.channel
         )
 
-        player.queue.add(track)
-        if not player.is_playing():
-            await player.advance()
+        async def play():
+            if not player.is_playing():
+                await player.advance()
 
-        if player.board is None:
-            await player.create_player_board(interaction)
+            if player.board is None:
+                await player.create_player_board(interaction)
+            else:
+                await player.delete_player_board()
+                await player.create_player_board(interaction)
+
+        # Youtube Search
+        if "open.spotify.com" not in query:
+            if "youtube.com" in query or "youtu.be" in query:
+                if "list=" in query:
+                    tracklist = await YouTubeSearch.playlist(query)
+
+                    player.queue.add(await YouTubeSearch.get_track(tracklist.tracks.pop(0)))
+                    await play()
+                    await interaction.response.send_message(
+                        embed=discord.Embed(
+                            title="Playlist added",
+                            description=f"{fmt.hyperlink(tracklist.name, tracklist.url)}"
+                        ).set_thumbnail(url=tracklist.thumbnail)
+                    )
+                    for track in tracklist.tracks:
+                        player.queue.add(await YouTubeSearch.get_track(track))
+
+                    
+                else:
+                    track = await YouTubeSearch.video(query)
+                    await interaction.response.send_message(
+                        embed=discord.Embed(
+                            title="Song Added",
+                            description=f"{fmt.hyperlink(track.title, track.url)}"
+                        ).set_thumbnail(url=track.thumbnail)
+                    )
+                    player.queue.add(track)
+                    await play()
+            else:
+                track = await self.choose_track(interaction, query)
+                player.queue.add(track)
+                await play()
+
+        # Spotify Search
         else:
-            await player.board.delete()
-            await player.board.respond(interaction)
+            if "track" in query:
+                track = await SpotifySearch.track(query)
+                await interaction.response.send_message(
+                    embed=discord.Embed(
+                        title="Song added",
+                        description=f"{fmt.hyperlink(track.title, track.url)}"
+                    ).set_thumbnail(url=track.thumbnail)
+                )
+
+            if "album" in query:
+                tracklist = await SpotifySearch.album(query)
+                await interaction.followup.send(
+                    embed=discord.Embed(
+                        title="Album added",
+                        description=f"{fmt.hyperlink(tracklist.name, tracklist.url)}"
+                    ).set_thumbnail(url=tracklist.thumbnail)
+                )
+                player.queue.add(await SpotifySearch.track(tracklist.tracks.pop[0]))
+                await play()
+                for track in tracklist.tracks:
+                    player.queue.add(await SpotifySearch.track(track))
+
+            if "playlist" in query:
+                tracklist = await SpotifySearch.playlist(query)
+                await interaction.followup.send(
+                    embed=discord.Embed(
+                        title="Playlist added",
+                        description=f"{fmt.hyperlink(tracklist.name, tracklist.url)}"
+                    ).set_thumbnail(url=tracklist.thumbnail)
+                )
+                player.queue.add(await SpotifySearch.track(tracklist.tracks.pop(0)))
+                await play()
+                for track in tracklist.tracks:
+                    player.queue.add(await SpotifySearch.track(track))
 
     @group.command(name="pause", description="Pause the currently playing player")
     async def pause_command(self, interaction: discord.Interaction):
@@ -209,7 +283,7 @@ class Music(Cog):
             await player.shuffle()
             await interaction.response.send_message("Queue shuffled")
 
-    @group.command(name="toggle_loop", description="Toggle queue loop")
+    @group.command(name="loop", description="Toggle queue loop")
     @app_commands.describe(loop="Off: Disable loop queue | All: Loop the entire queue | One: Loop only the current song")
     @app_commands.choices(loop=[
         app_commands.Choice(name="Off", value=0),
@@ -251,9 +325,7 @@ class Music(Cog):
         embed.set_thumbnail(url=player.current.thumbnail)
         embed.add_field(
             name="Currently playing",
-            value=\
-                f"{fmt.hyperlink(player.current.title, player.current.url)}\r"
-                f"Length: `{fmt.time(player.current.wavelink.length)}`",
+            value=f"{fmt.hyperlink(player.current.title, player.current.url)}",
             inline=False
         )
 
@@ -294,18 +366,34 @@ class Music(Cog):
                     page += f'`{pos}.` {fmt.hyperlink(fmt.shorten(item.title), item.url)}\n'
                     pos += 1
                 
-                pages.append(
-                    embed.add_field(
-                        name="Upcoming",
-                        value=page,
-                        inline=False
-                    )
+                embed=discord.Embed(title="Queue")
+                embed.set_thumbnail(url=player.current.thumbnail)
+                embed.add_field(
+                    name="Currently playing",
+                    value=f"{fmt.hyperlink(player.current.title, player.current.url)}",
+                    inline=False
+                )
+                embed.add_field(
+                    name="Upcoming",
+                    value=page,
+                    inline=False
                 )
 
-                paginator = Paginator(pages=pages)
-                await paginator.respond(interaction)
+                pages.append(embed)
 
+            paginator = Paginator(pages=pages)
+            await paginator.respond(interaction)
 
+    @group.command(name="board", description="Show current player board")
+    async def board_command(self, interaction: discord.Interaction):
+        if not await self.check_interaction(interaction):
+            return
+        
+        player = await self.manager.get_player(interaction.guild)
+        if player.board is not None:
+            await player.delete_player_board()
+
+        await player.create_player_board(interaction)
 
 
 async def setup(bot: Bot):

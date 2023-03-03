@@ -81,10 +81,10 @@ class PlayerBoard(discord.ui.View):
 
     def add_buttons(self):
         buttons = [
-            # PlayerButton(
-            #     "shuffle",
-            #     emoji=Emoji.shuffle
-            # ),
+            PlayerButton(
+                "shuffle",
+                emoji=Emoji.shuffle
+            ),
             PlayerButton(
                 "previous",
                 emoji=Emoji.previous
@@ -97,10 +97,10 @@ class PlayerBoard(discord.ui.View):
                 "next",
                 emoji=Emoji.skip
             ),
-            # PlayerButton(
-            #     "loop",
-            #     emoji=Emoji.loop_all
-            # ),            
+            PlayerButton(
+                "loop",
+                emoji=Emoji.loop_all
+            ),            
         ]
         for b in buttons:
             self.buttons[b.button_type] = b
@@ -117,17 +117,17 @@ class PlayerBoard(discord.ui.View):
                 else:
                     button.emoji = Emoji.pause
 
-            if key == "next":
-                if len(self.player.queue.upcoming) <= 0:
-                    button.disabled = True
-                else:
-                    button.disabled = False
+            # if key == "next":
+            #     if len(self.player.queue.upcoming) <= 0:
+            #         button.disabled = True
+            #     else:
+            #         button.disabled = False
 
-            if key == "previous":
-                if len(self.player.queue.past) <= 1:
-                    button.disabled = True
-                else:
-                    button.disabled = False
+            # if key == "previous":
+            #     if len(self.player.queue.past) <= 1:
+            #         button.disabled = True
+            #     else:
+            #         button.disabled = False
 
             self.add_item(button)
 
@@ -205,12 +205,12 @@ class PlayerQueue:
     def get_previous(self):
         if len(self.past) == 0:
             return None
-
-        current = self.past.pop(len(self.past)-1)
-        self.upcoming.insert(len(self.upcoming)-1, current)
+        
+        self.upcoming.append(self.past.pop(len(self.past)-1))
+        current = self.past[len(self.past)-1]
         return current
     
-    def add(self, item):
+    def add(self, item: Track | list[Track]):
         if isinstance(item, list):
             self.upcoming.extend(item)
         else:
@@ -267,7 +267,6 @@ class Player(wavelink.Player):
         if len(self.queue.past) <= 1:
             return
 
-        self.queue.get_previous()
         track = self.queue.get_previous()
         if track is None:
             return
@@ -287,6 +286,9 @@ class Player(wavelink.Player):
         try:
             await super().play(source.wavelink, replace, start, end, volume, pause)
             self.current = source
+
+            if self.board != None:
+                await self.board.update()
         except Exception as e:
             logger.error(e)
 
@@ -309,6 +311,10 @@ class Player(wavelink.Player):
     async def create_player_board(self, interaction: discord.Interaction):
         self.board = PlayerBoard(self)
         await self.board.respond(interaction)
+
+    async def delete_player_board(self):
+        await self.board.delete()
+        self.board = None
 
 
 class PlayerManager:

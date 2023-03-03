@@ -2,6 +2,9 @@ import os, discord
 from dotenv import load_dotenv
 load_dotenv()
 
+SPOTIFY_CLIENT_ID  = os.environ["SPOTIFY_CLIENT_ID"]
+SPOTIFY_CLIENT_SECRET = os.environ["SPOTIFY_CLIENT_SECRET"]
+
 DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
 DISCORD_CLIENT_ID = os.environ["DISCORD_CLIENT_ID"]
 BOT_NAME = os.environ["BOT_NAME"]

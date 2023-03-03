@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from typing import List
 import wavelink
 
+# @dataclass
+# class SpotifyTrack:
+
 
 @dataclass
 class Track:
@@ -14,5 +17,6 @@ class Track:
 class TrackList:
     name: str
     url: str
+    thumbnail: str
     type: str
     tracks: List

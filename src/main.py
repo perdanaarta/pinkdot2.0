@@ -1,9 +1,11 @@
 import os
 import pathlib
 import discord
+import asyncio
 from discord.ext.commands import Bot
 
 import config
+from cogs.music.search import SpotifySearch
 from utils.logger import logger
 
 class PinkDot(Bot):
@@ -13,16 +15,11 @@ class PinkDot(Bot):
             help_command=None,
             command_prefix="$"
         )
-        # self.intents.all()
-
 
     def run(self) -> None:
         super().run(config.DISCORD_BOT_TOKEN, reconnect=True, log_handler=None)
-    
 
-    async def sync_command(self):
-        await self.tree.sync()
-
+        asyncio.run(SpotifySearch.close())
     
     async def load_cogs(self):
         logger.info("Loading cogs...")
@@ -35,7 +32,6 @@ class PinkDot(Bot):
                     logger.info(f"[{cog.name}] cog loaded.")
                 except Exception as e:
                     logger.warning(e)
-
         
     async def on_ready(self):
         await self.load_cogs()
