@@ -328,8 +328,7 @@ class PlayerManager:
     async def connect_node(self):
         await self.bot.wait_until_ready()
 
-        file_path = os.path.join(config.SRC_DIR, "cogs/music/wavelink_nodes.json")
-        nodes = json.loads(open(file_path).read())
+        nodes = json.loads(open(config.LAVALINK_NODES_JSON).read())
         for node in nodes:
             try:
                 await wavelink.NodePool.create_node(

@@ -19,3 +19,4 @@ ACTIVITY_TYPE = discord.ActivityType.playing
 
 SRC_DIR = os.path.dirname(__file__)
 LOG_FILE = os.path.join(SRC_DIR, "../log/latest.log")
+LAVALINK_NODES_JSON = os.path.join(SRC_DIR, "../lavalink-nodes.json")
