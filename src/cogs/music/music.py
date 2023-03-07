@@ -388,6 +388,8 @@ class Music(Cog):
 
     @group.command(name="board", description="Show current player board")
     async def board_command(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+
         if not await self.check_interaction(interaction):
             return
         

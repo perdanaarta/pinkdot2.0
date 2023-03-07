@@ -1,5 +1,12 @@
 [
     {
+        "identifier": "[SSL] local",
+        "host":"localhost",
+        "port": 7400,
+        "password": "secretsushipassword",
+        "https": true
+    },
+    {
         "identifier": "[SSL] KD",
         "host":"node1.kartadharta.xyz",
         "port": 443,
