@@ -1,35 +1,46 @@
 #!/usr/bin/bash
- 
-set -e
 
 home="$(dirname "$0")/.."
-source $home/.env
-python=python$PYTHON_VERSION
-
-mkdir $home/.venv
-$python -m venv $home/.venv
-
-source $home/.venv/bin/activate
-pip install -r $home/requirements.txt
 
 sudo apt install ffmpeg -y
 
-app="pinkdot"
+source $home/.env
+python="python$PYTHON_VERSION"
 
-# Install Systemd Service
-sudo cat > /etc/systemd/system/$app.service << EOF
+mkdir $home/.venv
+$python -m venv $home/.venv
+source $home/.venv/bin/activate
+pip install -r $home/requirements.txt
+
+write_service_file () {
+  appname=$1
+  
+  # Install Systemd Service
+  sudo cat > /etc/systemd/system/$appname.service << EOF
+
 [Unit]
-Description=$app discord bot
+Description=$appname discord bot
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/bash $home/scripts/run.sh
+ExecStart=/usr/bin/bash /opt/$appname/scripts/run.sh
 Restart=on-failure
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target  
 EOF
+  
+  sudo systemctl daemon-reload 
+  sudo systemctl enable $appname.service
+  sudo systemctl start $appname.service
+}
 
-sudo systemctl daemon-reload 
-sudo systemctl enable $app.service # remove the extension
-sudo systemctl start $app.service
+write_service_file pinkdot
+
+
+
+
+
+
+
+

@@ -9,16 +9,5 @@ services:
     volumes:
       - type: bind
         source: ./application.yml
-        target: /opt/Lavalink/application.yml
-
-  pinkdot2:
-    container_name: pinkdot2
-    image: pinkdot2
-    networks:
-      - internal
-
-networks:
-  internal: {}
-
-    
+        target: /opt/Lavalink/application.yml   
   

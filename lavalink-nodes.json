@@ -1,9 +1,9 @@
 [
     {
-        "identifier": "[NON SSL] local",
-        "host":"lavalink",
-        "port": 2333,
-        "password": "sushisecretpassword",
-        "https": false
+        "identifier": "[SSL] KD",
+        "host":"node1.kartadharta.xyz",
+        "port": 443,
+        "password": "kdlavalink",
+        "https": true
     }
 ]

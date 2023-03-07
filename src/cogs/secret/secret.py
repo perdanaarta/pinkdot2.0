@@ -14,6 +14,8 @@ class Secret(Cog):
         
         await self.bot.tree.sync()
         logger.info("Command tree synced.")
+        
+        await ctx.reply("Command tree synced.")
 
 
 async def setup(bot: Bot):
