@@ -1,0 +1,5 @@
+discord.py
+wavelink
+async-spotify
+python-dotenv
+pynacl

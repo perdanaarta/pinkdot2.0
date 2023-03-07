@@ -1,8 +1,8 @@
 [
     {
         "identifier": "[NON SSL] local",
-        "host":"localhost",
-        "port": 7400,
+        "host":"lavalink",
+        "port": 2333,
         "password": "sushisecretpassword",
         "https": false
     }

@@ -2,9 +2,23 @@ services:
   lavalink:
     container_name: lavalink
     image: fredboat/lavalink
+    networks:
+      - internal
     ports:
       - "7400:2333"
     volumes:
       - type: bind
         source: ./application.yml
         target: /opt/Lavalink/application.yml
+
+  pinkdot2:
+    container_name: pinkdot2
+    image: pinkdot2
+    networks:
+      - internal
+
+networks:
+  internal: {}
+
+    
+  

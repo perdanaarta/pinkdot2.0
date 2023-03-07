@@ -11,6 +11,7 @@ from .utils import Track
 from main import logger
 import config
 import wavelink
+from wavelink.ext import spotify
 
 
 class PlayerLoopState(Enum):
@@ -23,7 +24,7 @@ class PlayerButton(discord.ui.Button):
     def __init__(
         self, 
         button_type: str,
-        style: discord.ButtonStyle = discord.ButtonStyle.blurple, 
+        style: discord.ButtonStyle = discord.ButtonStyle.grey, 
         label: str = None,
         disabled: bool = False,
         custom_id: str = None,
@@ -333,6 +334,10 @@ class PlayerManager:
             try:
                 await wavelink.NodePool.create_node(
                 bot=self.bot,
+                spotify_client=spotify.SpotifyClient(
+                    client_id=config.SPOTIFY_CLIENT_ID, 
+                    client_secret=config.SPOTIFY_CLIENT_SECRET
+                ),
                 **node
             )
             except Exception as e:

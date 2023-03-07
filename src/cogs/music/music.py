@@ -5,7 +5,7 @@ from discord.ext.commands import Bot, Cog
 
 import wavelink
 
-from .utils import Track, TrackList
+from .utils import Track
 from .player import Player, PlayerManager, PlayerLoopState
 from .search import YouTubeSearch, SpotifySearch
 
@@ -138,7 +138,7 @@ class Music(Cog):
 
 
         player = await self.manager.create_player(
-            guild=interaction.guild, 
+            guild=interaction.guild,
             channel=interaction.user.voice.channel
         )
 
@@ -157,18 +157,17 @@ class Music(Cog):
             if "youtube.com" in query or "youtu.be" in query:
                 if "list=" in query:
                     tracklist = await YouTubeSearch.playlist(query)
-
-                    player.queue.add(await YouTubeSearch.get_track(tracklist.tracks.pop(0)))
-                    await play()
                     await interaction.response.send_message(
                         embed=discord.Embed(
                             title="Playlist added",
                             description=f"{fmt.hyperlink(tracklist.name, tracklist.url)}"
                         ).set_thumbnail(url=tracklist.thumbnail)
                     )
-                    for track in tracklist.tracks:
-                        player.queue.add(await YouTubeSearch.get_track(track))
 
+                    async for track in tracklist.iterator():
+                        player.queue.add(YouTubeSearch.get_track(track))
+                        if not player.is_playing():
+                            await play()
                     
                 else:
                     track = await YouTubeSearch.video(query)
@@ -180,6 +179,7 @@ class Music(Cog):
                     )
                     player.queue.add(track)
                     await play()
+
             else:
                 track = await self.choose_track(interaction, query)
                 player.queue.add(track)
@@ -204,10 +204,11 @@ class Music(Cog):
                         description=f"{fmt.hyperlink(tracklist.name, tracklist.url)}"
                     ).set_thumbnail(url=tracklist.thumbnail)
                 )
-                player.queue.add(await SpotifySearch.track(tracklist.tracks.pop[0]))
-                await play()
-                for track in tracklist.tracks:
-                    player.queue.add(await SpotifySearch.track(track))
+
+                async for track in tracklist.iterator():
+                    player.queue.add(YouTubeSearch.get_track(track))
+                    if not player.is_playing():
+                        await play()
 
             if "playlist" in query:
                 tracklist = await SpotifySearch.playlist(query)
@@ -217,10 +218,11 @@ class Music(Cog):
                         description=f"{fmt.hyperlink(tracklist.name, tracklist.url)}"
                     ).set_thumbnail(url=tracklist.thumbnail)
                 )
-                player.queue.add(await SpotifySearch.track(tracklist.tracks.pop(0)))
-                await play()
-                for track in tracklist.tracks:
-                    player.queue.add(await SpotifySearch.track(track))
+
+                async for track in tracklist.iterator():
+                    player.queue.add(YouTubeSearch.get_track(track))
+                    if not player.is_playing():
+                        await play()
 
     @group.command(name="pause", description="Pause the currently playing player")
     async def pause_command(self, interaction: discord.Interaction):
@@ -390,10 +392,11 @@ class Music(Cog):
             return
         
         player = await self.manager.get_player(interaction.guild)
-        if player.board is not None:
+        if player.board is None:
+            await player.create_player_board(interaction)
+        else:
             await player.delete_player_board()
-
-        await player.create_player_board(interaction)
+            await player.create_player_board(interaction)
 
 
 async def setup(bot: Bot):
